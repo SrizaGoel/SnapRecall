@@ -1,0 +1,4 @@
+docker exec -it snaprecall-postgres psql -U postgres -d snaprecall #to oprn the schema
+uvicorn app:app --reload #to start the app
+http://127.0.0.1:8000/docs #to check endpoints working
+
