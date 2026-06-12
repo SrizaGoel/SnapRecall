@@ -1,0 +1,25 @@
+# Secrets
+backend/.env
+
+# Virtual Environment
+env/
+
+# Flutter/React app (for now)
+snaprecall_app/
+
+# Python
+__pycache__/
+*.pyc
+
+# IDE
+.vscode/
+.idea/
+
+# OCR/temp files
+tmp.jpg
+output/
+inference_results/
+.paddleocr/
+
+extra/
+open.txt
