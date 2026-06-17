@@ -1,6 +1,7 @@
 # Import torch first to resolve Windows DLL conflict (WinError 127) with PaddleOCR/PaddlePaddle
 import torch
 from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 import cloudinary.uploader
 import cloudinary_config
 from database import engine
@@ -9,7 +10,15 @@ from embedding import generate_embedding
 from ocr import extract_text
 from llm import ask_groq
 
-app=FastAPI()
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def home():
