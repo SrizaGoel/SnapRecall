@@ -19,6 +19,13 @@ CREATE TABLE sessions(
     tags VARCHAR(100)
 );
 
+ALTER TABLE sessions
+ADD COLUMN title TEXT;
+
+ALTER TABLE sessions
+ADD COLUMN summary TEXT;
+
+
 CREATE TABLE screenshots(
     screenshot_id SERIAL PRIMARY KEY,
     session_id INTEGER REFERENCES sessions(session_id) ON DELETE CASCADE,
@@ -29,3 +36,6 @@ CREATE TABLE screenshots(
     is_deleted BOOLEAN DEFAULT FALSE,
     processing_status VARCHAR(20) CHECK (processing_status IN ('pending','ocr_done','embedded','failed')) DEFAULT 'pending'
 );
+
+ALTER TABLE screenshots
+ADD COLUMN cloudinary_public_id TEXT;
