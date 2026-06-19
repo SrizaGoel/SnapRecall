@@ -9,7 +9,7 @@ from sqlalchemy import text
 from embedding import generate_embedding
 from ocr import extract_text
 from llm import ask_groq
-
+from session_summary import generate_session_summary
 app = FastAPI()
 
 app.add_middleware(
@@ -27,7 +27,7 @@ def home():
     }
 
 @app.post("/upload")
-async def upload_image(file: UploadFile = File(...)):
+def upload_image(session_id:int,file: UploadFile = File(...)):
     result = cloudinary.uploader.upload(
         file.file,
         folder="snaprecall"
@@ -38,14 +38,16 @@ async def upload_image(file: UploadFile = File(...)):
         db_result=conn.execute(
             text(
                 """
-                    INSERT INTO SCREENSHOTS(image_url,processing_status,ocr_text,embedding) VALUES (:image_url,'embedded',:ocr_text,:embedding)
+                    INSERT INTO SCREENSHOTS(session_id,image_url,cloudinary_public_id,processing_status,ocr_text,embedding) VALUES (:session_id,:image_url,:cloudinary_public_id,'embedded',:ocr_text,:embedding)
                     RETURNING screenshot_id
                 """
             ),
             {
                 "image_url":result["secure_url"],
+                "cloudinary_public_id":result["public_id"],
                 "ocr_text":ocr_text,
-                "embedding":embedding
+                "embedding":embedding,
+                "session_id":session_id
             }
         )
         screenshot_id = db_result.scalar()
@@ -87,7 +89,7 @@ def retrieve_similar_screenshots(query):
                     FROM screenshots
                     WHERE embedding IS NOT NULL
                 ) AS results
-                WHERE distance < 0.7
+                WHERE distance < 0.25
                 ORDER BY distance
                 LIMIT 5
             """),
@@ -107,7 +109,7 @@ def query_search(query: str):
         return {"message": "No relevant screenshots found"}
 
     return results
-# change and verify the hardcoded 0.7 as threshold
+# change and verify the hardcoded 0.25 as threshold
 
 @app.get("/ask")
 def ask(question: str):
@@ -131,6 +133,123 @@ def ask(question: str):
         "answer": answer,
         "sources": matches
     }
+
+@app.post("/start-session")
+def start_session(user_id:int):
+    with engine.connect() as conn:
+        result=conn.execute(
+            text(
+                """
+                    INSERT INTO sessions(user_id,start_time) VALUES (:user_id,NOW()) RETURNING session_id
+                """
+            ),
+            {"user_id":user_id}
+        )
+        session_id=result.scalar()
+        conn.commit()
+        return {
+            "session_id":session_id
+        }
+
+@app.post("/end-session/{session_id}")
+def end_session(session_id:int):
+    session=generate_session_summary(session_id)
+    title=session["title"]
+    summary=session["summary"]
+    with engine.connect() as conn:
+        result=conn.execute(
+            text(
+                """
+                    UPDATE sessions SET end_time=NOW(),duration=NOW()-start_time,summary=:summary,title=:title WHERE session_id=:session_id
+                """
+            ),
+            {
+                "session_id":session_id,
+                "summary":summary,
+                "title":title
+            }
+        )
+        conn.commit()
+        return {
+            "message":"Session ended"
+        }
+    
+@app.get("/sessions")
+def get_sessions():
+    with engine.connect() as conn:
+        result=conn.execute(
+            text(
+                """
+                    SELECT*FROM sessions ORDER BY start_time DESC
+                """
+            )
+        )
+        sessions = result.mappings().all()
+
+        return sessions
+    
+@app.get("/sessions/{session_id}")
+def get_session(session_id: int):
+
+    with engine.connect() as conn:
+
+        result = conn.execute(
+            text("""SELECT*FROM sessions WHERE session_id = :session_id """),
+            {"session_id": session_id}
+        )
+
+        return result.mappings().first()
+
+@app.get("/sessions/{session_id}/screenshots")
+def get_screenshot(session_id:int):
+    with engine.connect() as conn:
+        result = conn.execute(
+            text("""SELECT*FROM screenshots WHERE session_id = :session_id """),
+            {"session_id": session_id}
+        )
+
+        return result.mappings().all()
+
+@app.delete("/screenshots/{screenshot_id}")
+def delete_screenshot(screenshot_id: int):
+    with engine.connect() as conn:
+        result = conn.execute(
+            text("SELECT cloudinary_public_id FROM screenshots WHERE screenshot_id = :screenshot_id"),
+            {"screenshot_id": screenshot_id}
+        )
+        row = result.mappings().first()
+        if not row:
+            return {"status": "error", "message": "Screenshot not found"}
+        cloudinary_id = row["cloudinary_public_id"]
+        conn.execute(
+            text("DELETE FROM screenshots WHERE screenshot_id = :screenshot_id"),
+            {"screenshot_id": screenshot_id}
+        )
+        conn.commit()
+    if cloudinary_id:
+        try:
+            cloudinary.uploader.destroy(cloudinary_id)
+        except Exception:
+            pass
+            
+    return {"status": "deleted", "screenshot_id": screenshot_id}
+
+@app.get("/sessions_by_range")
+def get_session_by_range(start_date:str,end_date:str):
+    with engine.connect() as conn:
+        result=conn.execute(
+            text(
+                """
+                    SELECT session_id,title,summary,start_time FROM sessions where DATE(start_time) BETWEEN :start_date and :end_date ORDER BY start_time
+                """
+            ),
+            {
+                "start_date":start_date,
+                "end_date":end_date
+            }
+        )
+        return result.mappings().all()
+
 # @app.get("/db-test")
 # def db_test():
 #     with engine.connect() as conn:
