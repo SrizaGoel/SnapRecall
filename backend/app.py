@@ -27,7 +27,7 @@ def home():
     }
 
 @app.post("/upload")
-def upload_image(session_id:int,file: UploadFile = File(...)):
+def upload_image(session_id: int = None, file: UploadFile = File(...)):
     result = cloudinary.uploader.upload(
         file.file,
         folder="snaprecall"

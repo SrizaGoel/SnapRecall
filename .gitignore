@@ -4,8 +4,6 @@ backend/.env
 # Virtual Environment
 env/
 
-# Flutter/React app (for now)
-snaprecall_app/
 
 # Python
 __pycache__/
