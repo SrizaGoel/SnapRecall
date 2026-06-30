@@ -11,19 +11,19 @@ const generateCalendarDays = () => {
     const today = new Date();
     const year = today.getFullYear();
     const month = today.getMonth();
-    
+
     const firstDay = new Date(year, month, 1).getDay();
     const startOffset = firstDay === 0 ? 6 : firstDay - 1;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    
+
     const days = [];
     for (let i = 0; i < startOffset; i++) {
         days.push({ id: `empty-${i}`, dayNum: null, isActive: false });
     }
-    
+
     // Mock active days for the current month (steel blue if used, white if missed)
     const mockActiveDays = [2, 3, 5, 8, 12, 15, 18, 19, 20, 22, 25, 27, 28, 29];
-    
+
     for (let d = 1; d <= daysInMonth; d++) {
         days.push({
             id: `day-${d}`,
@@ -35,25 +35,28 @@ const generateCalendarDays = () => {
     return days;
 };
 
-export function HomeScreen({navigation}) {
+export function HomeScreen({ navigation }) {
     const today = new Date();
     const currentMonthName = monthNames[today.getMonth()];
     const currentYear = today.getFullYear();
     const calendarDays = generateCalendarDays();
 
-    // AI assistant local states
     const [question, setQuestion] = useState("");
     const [loading, setLoading] = useState(false);
     const [aiResponse, setAiResponse] = useState(null);
     const [sources, setSources] = useState([]);
+    const [input, setInput] = useState("");
 
     const handleAskAI = () => {
-        if (!question.trim()) return;
+        if (!question.trim()) {
+            setInput("* Please enter a question ");
+            return;
+        }
+        setInput("");
         setLoading(true);
         setAiResponse(null);
         setSources([]);
 
-        // Simulated AI response timeout (1.5 seconds)
         setTimeout(() => {
             setLoading(false);
             setAiResponse(
@@ -72,7 +75,7 @@ export function HomeScreen({navigation}) {
             style={{ flex: 1 }}
         >
             <View style={styles.container}>
-                <ScrollView 
+                <ScrollView
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.scrollContent}
                 >
@@ -81,9 +84,9 @@ export function HomeScreen({navigation}) {
                             <Text style={styles.activeText}>Home</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.tab} onPress={()=>{
-                                navigation.navigate('StudyModeScreen')
-                            }}>
+                        <TouchableOpacity style={styles.tab} onPress={() => {
+                            navigation.navigate('StudyModeScreen')
+                        }}>
                             <Text style={styles.inactiveText}>Study Mode</Text>
                         </TouchableOpacity>
                     </View>
@@ -140,8 +143,6 @@ export function HomeScreen({navigation}) {
                             </View>
                         </LinearGradient>
                     </View>
-
-                    {/* Ask AI Assistant Section */}
                     <View style={styles.aiContainer}>
                         <View style={styles.aiHeader}>
                             <Text style={styles.aiTitle}>Ask Cypher</Text>
@@ -154,14 +155,21 @@ export function HomeScreen({navigation}) {
                                 placeholder="Ask anything about your screenshots..."
                                 placeholderTextColor="#6C8CA7"
                                 value={question}
-                                onChangeText={setQuestion}
+                                onChangeText={(text)=>{
+                                    setQuestion(text);
+                                    setInput("");
+                                }}
                                 onSubmitEditing={handleAskAI}
                             />
                             <TouchableOpacity style={styles.sendButton} onPress={handleAskAI}>
                                 <Text style={styles.sendButtonText}>Ask</Text>
                             </TouchableOpacity>
                         </View>
-
+                          {input !== "" && (
+                                <Text style={styles.inputText}>
+                                    {input}
+                                </Text>
+                            )}
                         {loading && (
                             <View style={styles.loadingContainer}>
                                 <ActivityIndicator size="small" color="#4682B4" />
@@ -177,7 +185,7 @@ export function HomeScreen({navigation}) {
                                 <View style={styles.sourcesHeader}>
                                     <Text style={styles.sourcesTitle}>Sources Used</Text>
                                 </View>
-                                
+
                                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sourcesScroll}>
                                     {sources.map(source => (
                                         <View key={source.id} style={styles.sourceCard}>
@@ -191,10 +199,11 @@ export function HomeScreen({navigation}) {
                                         </View>
                                     ))}
                                 </ScrollView>
-                                
-                                <TouchableOpacity 
-                                    style={styles.clearButton} 
+
+                                <TouchableOpacity
+                                    style={styles.clearButton}
                                     onPress={() => {
+                                        setInput("");
                                         setQuestion("");
                                         setAiResponse(null);
                                         setSources([]);
@@ -556,7 +565,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#649BC8",
         padding: 15,
         borderRadius: 20,
-        alignItems: "center",     
+        alignItems: "center",
         justifyContent: "center",
     },
     progressButton: {
@@ -571,7 +580,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#649BC8",
         padding: 15,
         borderRadius: 20,
-        alignItems: "center",     
+        alignItems: "center",
         justifyContent: "center",
     },
     resourceButton: {
@@ -581,4 +590,10 @@ const styles = StyleSheet.create({
         letterSpacing: 1.5,
         textAlign: "center"
     },
+    inputText: {
+    color: "#851f1f",
+    fontSize: 13,
+    marginTop: 6,
+    marginLeft: 4,
+},
 });
