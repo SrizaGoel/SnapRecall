@@ -220,7 +220,9 @@ export function HomeScreen({ navigation }) {
                             Track your progress
                         </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.myResources}>
+                    <TouchableOpacity style={styles.myResources} onPress={()=>{
+                        navigation.navigate('Resources')
+                    }}>
                         <Text style={styles.resourceButton}>
                             My Resources
                         </Text>
