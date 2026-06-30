@@ -2,6 +2,9 @@ import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, TextInput,
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState, useEffect } from "react";
+
+import SessionUploads from "../components/SessionUploads";
+
 export function StudyModeScreen({ navigation }) {
     const [isSessionActive, setIsSessionActive] = useState(false);
     const [seconds, setSeconds] = useState(0);
@@ -25,7 +28,9 @@ export function StudyModeScreen({ navigation }) {
             String(secs).padStart(2, "0")
         );
     };
+    const [showPopup, setShowPopup] = useState(false);
     return (
+
         <LinearGradient
             colors={["#F5F8FA", "#ECF2F6", "#E3ECF1"]}
             style={{ flex: 1 }}
@@ -70,6 +75,7 @@ export function StudyModeScreen({ navigation }) {
                         onPress={(
                             () => {
                                 setIsSessionActive(false);
+                                setShowPopup(true);
                             }
                         )}>
                         <Text style={styles.endButton}>
@@ -77,13 +83,17 @@ export function StudyModeScreen({ navigation }) {
                         </Text>
                     </TouchableOpacity>
                 </View>
-                            <View style={styles.quoteContainer}>
-                <Text style={styles.quoteText}>
-                    "The beautiful thing about learning is that nobody can take it away from you."
-                </Text>
-                <Text style={styles.quoteAuthor}>- B.B. King</Text>
+                <View style={styles.quoteContainer}>
+                    <Text style={styles.quoteText}>
+                        "The beautiful thing about learning is that nobody can take it away from you."
+                    </Text>
+                    <Text style={styles.quoteAuthor}>- B.B. King</Text>
+                </View>
             </View>
-            </View>
+            <SessionUploads
+                visible={showPopup}
+                onClose={() => setShowPopup(false)}
+            />
 
         </LinearGradient >
     );
