@@ -10,6 +10,7 @@ from embedding import generate_embedding
 from ocr import extract_text
 from llm import ask_groq
 from session_summary import generate_session_summary
+from datetime import date, timedelta
 app = FastAPI()
 
 app.add_middleware(
@@ -73,7 +74,7 @@ async def get_screenshots():
         screenshots=result.mappings().all()
         return screenshots
 
-def retrieve_similar_screenshots(query):
+def retrieve_similar_screenshots(user_id,query):
     query_embedding = generate_embedding(query)
 
     with engine.connect() as conn:
@@ -86,24 +87,25 @@ def retrieve_similar_screenshots(query):
                         image_url,
                         ocr_text,
                         embedding <=> CAST(:query_embedding AS vector) AS distance
-                    FROM screenshots
-                    WHERE embedding IS NOT NULL
+                    FROM screenshots s JOIN sessions sess ON s.session_id = sess.session_id
+                    WHERE sess.user_id = :user_id AND embedding IS NOT NULL
                 ) AS results
                 WHERE distance < 0.25
                 ORDER BY distance
                 LIMIT 5
             """),
             {
-                "query_embedding": str(query_embedding)
+                "query_embedding": str(query_embedding),
+                "user_id":user_id
             }
         )
 
         return result.mappings().all()
 
 @app.get("/search")
-def query_search(query: str):
+def query_search(user_id:int,query: str):
 
-    results = retrieve_similar_screenshots(query)
+    results = retrieve_similar_screenshots(user_id,query)
 
     if not results:
         return {"message": "No relevant screenshots found"}
@@ -112,9 +114,9 @@ def query_search(query: str):
 # change and verify the hardcoded 0.25 as threshold
 
 @app.get("/ask")
-def ask(question: str):
+def ask(user_id:int,question: str):
 
-    matches = retrieve_similar_screenshots(question)
+    matches = retrieve_similar_screenshots(user_id,question)
 
     if not matches:
         return {"message": "No relevant screenshots found"}
@@ -256,3 +258,40 @@ def get_session_by_range(start_date:str,end_date:str):
 #         result = conn.execute(text("SELECT 1"))
 #         return {"result": result.scalar()}
 # go to http://127.0.0.1:8000/docs to check get db test endpoint and click try it out -> execute 
+
+def calculate_current_streak(study_dates):
+    if not study_dates:
+        return 0
+    study_dates = sorted(set(study_dates))
+    study_set = set(study_dates)
+    today = date.today()
+    if today in study_set:
+        current = today
+    elif today - timedelta(days=1) in study_set:
+        current = today - timedelta(days=1)
+    else:
+        return 0
+    streak = 0
+
+    while current in study_set:
+        streak += 1
+        current -= timedelta(days=1)
+    return streak
+
+@app.get("/dashboard/{user_id}")
+def get_dashboard_data(user_id:int):
+    with engine.connect() as conn:
+        result=conn.execute(
+            text(
+                """
+                    SELECT DISTINCT DATE(start_time) AS study_day FROM sessions WHERE user_id = :user_id ORDER BY study_day DESC;
+                """
+            ),
+            {"user_id": user_id}
+        )
+        study_dates = [row.study_day.isoformat() for row in result]
+
+        return {
+            "study_dates": study_dates,
+            "current_streak":calculate_current_streak(study_dates)
+        }
