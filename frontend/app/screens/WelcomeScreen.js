@@ -5,7 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export default function WelcomeScreen({ navigation }) {
     useEffect(() => {
         const checkLogin = async () => {
-            await new Promise(resolve => setTimeout(resolve, 3000));
+            await new Promise(resolve => setTimeout(resolve, 5000));
             const token = await AsyncStorage.getItem("userToken");
             if (token) {
                 navigation.replace("Home");

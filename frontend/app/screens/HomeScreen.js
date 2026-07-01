@@ -1,13 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, TextInput, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import api from "../../services/api";
+
 const monthNames = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
 ];
 
-const generateCalendarDays = () => {
+const generateCalendarDays = (activeDates) => {
     const today = new Date();
     const year = today.getFullYear();
     const month = today.getMonth();
@@ -22,13 +24,16 @@ const generateCalendarDays = () => {
     }
 
     // Mock active days for the current month (steel blue if used, white if missed)
-    const mockActiveDays = [2, 3, 5, 8, 12, 15, 18, 19, 20, 22, 25, 27, 28, 29];
+    //const mockActiveDays = [2, 3, 5, 8, 12, 15, 18, 19, 20, 22, 25, 27, 28, 29];
+
 
     for (let d = 1; d <= daysInMonth; d++) {
+        const dateString =
+            `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
         days.push({
             id: `day-${d}`,
             dayNum: d,
-            isActive: mockActiveDays.includes(d),
+            isActive: activeDates.has(dateString),
             isToday: d === today.getDate(),
         });
     }
@@ -39,7 +44,9 @@ export function HomeScreen({ navigation }) {
     const today = new Date();
     const currentMonthName = monthNames[today.getMonth()];
     const currentYear = today.getFullYear();
-    const calendarDays = generateCalendarDays();
+    const [activeDates, setActiveDates] = useState(new Set());
+    const [currentStreak, setCurrentStreak] = useState(0);
+    const calendarDays = generateCalendarDays(activeDates);
 
     const [question, setQuestion] = useState("");
     const [loading, setLoading] = useState(false);
@@ -47,7 +54,7 @@ export function HomeScreen({ navigation }) {
     const [sources, setSources] = useState([]);
     const [input, setInput] = useState("");
 
-    const handleAskAI = () => {
+    const handleAskAI = async () => {
         if (!question.trim()) {
             setInput("* Please enter a question ");
             return;
@@ -57,18 +64,54 @@ export function HomeScreen({ navigation }) {
         setAiResponse(null);
         setSources([]);
 
-        setTimeout(() => {
+        // setTimeout(() => {
+        //     setLoading(false);
+        //     setAiResponse(
+        //         "Based on your React Native hooks slides, you should use useEffect when synchronizing with an external system. For performance optimizations, consider using useMemo or useCallback."
+        //     );
+        //     setSources([
+        //         { id: "1", title: "React Hooks Slide.png", date: "June 25" },
+        //         { id: "2", title: "UseEffect Notes.png", date: "June 26" }
+        //     ]);
+        // }, 1500);
+        try {
+            const { data } = await api.get("/ask", {
+                params: {
+                    user_id,
+                    question,
+                },
+            });
+
+            if (data.message) {
+                setAiResponse(data.message);
+                setSources([]);
+            } else {
+                setAiResponse(data.answer);
+                setSources(data.sources);
+            }
+        } catch (err) {
+            console.log(err);
+            setAiResponse("Something went wrong.");
+        } finally {
             setLoading(false);
-            setAiResponse(
-                "Based on your React Native hooks slides, you should use useEffect when synchronizing with an external system. For performance optimizations, consider using useMemo or useCallback."
-            );
-            setSources([
-                { id: "1", title: "React Hooks Slide.png", date: "June 25" },
-                { id: "2", title: "UseEffect Notes.png", date: "June 26" }
-            ]);
-        }, 1500);
+        }
+    };
+    const user_id = 1
+    const fetchActiveDays = async () => {
+        try {
+            const { data } = await api.get(`/dashboard/${user_id}`);
+
+            setActiveDates(new Set(data.study_dates));
+            setCurrentStreak(data.current_streak);
+        } catch (err) {
+            console.log(err);
+            return [];
+        }
     };
 
+    useEffect(() => {
+        fetchActiveDays();
+    }, []);
     return (
         <LinearGradient
             colors={["#F5F8FA", "#ECF2F6", "#E3ECF1"]}
@@ -102,7 +145,7 @@ export function HomeScreen({ navigation }) {
                         >
                             <View style={styles.leftSection}>
                                 <Image source={require("../assets/streak-fire.png")} style={styles.streakImage} />
-                                <Text style={styles.streakCountText}>5</Text>
+                                <Text style={styles.streakCountText}>{currentStreak}</Text>
                                 <Text style={styles.streakLabel}>Day Streak</Text>
                             </View>
 
@@ -155,7 +198,7 @@ export function HomeScreen({ navigation }) {
                                 placeholder="Ask anything about your screenshots..."
                                 placeholderTextColor="#6C8CA7"
                                 value={question}
-                                onChangeText={(text)=>{
+                                onChangeText={(text) => {
                                     setQuestion(text);
                                     setInput("");
                                 }}
@@ -165,11 +208,11 @@ export function HomeScreen({ navigation }) {
                                 <Text style={styles.sendButtonText}>Ask</Text>
                             </TouchableOpacity>
                         </View>
-                          {input !== "" && (
-                                <Text style={styles.inputText}>
-                                    {input}
-                                </Text>
-                            )}
+                        {input !== "" && (
+                            <Text style={styles.inputText}>
+                                {input}
+                            </Text>
+                        )}
                         {loading && (
                             <View style={styles.loadingContainer}>
                                 <ActivityIndicator size="small" color="#4682B4" />
@@ -186,15 +229,28 @@ export function HomeScreen({ navigation }) {
                                     <Text style={styles.sourcesTitle}>Sources Used</Text>
                                 </View>
 
-                                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sourcesScroll}>
+                                <ScrollView
+                                    horizontal
+                                    showsHorizontalScrollIndicator={false}
+                                    style={styles.sourcesScroll}
+                                >
                                     {sources.map(source => (
-                                        <View key={source.id} style={styles.sourceCard}>
-                                            <View style={styles.sourceImagePlaceholder}>
-                                                <Text style={styles.sourcePlaceholderText}>Image</Text>
-                                            </View>
+                                        <View
+                                            key={source.screenshot_id}
+                                            style={styles.sourceCard}
+                                        >
+                                            <Image
+                                                source={{ uri: source.image_url }}
+                                                style={styles.sourceImage}
+                                            />
+
                                             <View style={styles.sourceInfo}>
-                                                <Text style={styles.sourceTitleText} numberOfLines={1}>{source.title}</Text>
-                                                <Text style={styles.sourceDateText}>{source.date}</Text>
+                                                <Text
+                                                    style={styles.sourceTitleText}
+                                                    numberOfLines={2}
+                                                >
+                                                    {source.ocr_text}
+                                                </Text>
                                             </View>
                                         </View>
                                     ))}
@@ -220,7 +276,7 @@ export function HomeScreen({ navigation }) {
                             Track your progress
                         </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.myResources} onPress={()=>{
+                    <TouchableOpacity style={styles.myResources} onPress={() => {
                         navigation.navigate('Resources')
                     }}>
                         <Text style={styles.resourceButton}>
@@ -593,9 +649,14 @@ const styles = StyleSheet.create({
         textAlign: "center"
     },
     inputText: {
-    color: "#851f1f",
-    fontSize: 13,
-    marginTop: 6,
-    marginLeft: 4,
-},
+        color: "#851f1f",
+        fontSize: 13,
+        marginTop: 6,
+        marginLeft: 4,
+    },
+    sourceImage: {
+        width: 36,
+        height: 36,
+        borderRadius: 8,
+    },
 });

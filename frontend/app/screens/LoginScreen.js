@@ -23,8 +23,6 @@ export default function LoginScreen({ navigation }) {
         <Text style={styles.subtitle}>
           Continue your learning journey.
         </Text>
-
-        {/* Placeholder so Signup transitions smoothly */}
         <View style={styles.placeholder} />
 
         <TouchableOpacity
