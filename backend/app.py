@@ -289,9 +289,9 @@ def get_dashboard_data(user_id:int):
             ),
             {"user_id": user_id}
         )
-        study_dates = [row.study_day.isoformat() for row in result]
+        study_dates = [row.study_day for row in result]
 
         return {
-            "study_dates": study_dates,
+            "study_dates": [d.isoformat() for d in study_dates],
             "current_streak":calculate_current_streak(study_dates)
         }
