@@ -236,19 +236,35 @@ def delete_screenshot(screenshot_id: int):
     return {"status": "deleted", "screenshot_id": screenshot_id}
 
 @app.get("/sessions_by_range")
-def get_session_by_range(start_date:str,end_date:str):
+@app.get("/sessions_by_range")
+def get_sessions_by_range(
+    user_id: int,
+    start_date: str,
+    end_date: str
+):
     with engine.connect() as conn:
-        result=conn.execute(
-            text(
-                """
-                    SELECT session_id,title,summary,start_time FROM sessions where DATE(start_time) BETWEEN :start_date and :end_date ORDER BY start_time
-                """
-            ),
+        result = conn.execute(
+            text("""
+                SELECT
+                    session_id,
+                    DATE(start_time) AS study_date,
+                    title,
+                    summary,
+                    start_time,
+                    end_time,
+                    duration
+                FROM sessions
+                WHERE user_id = :user_id
+                  AND DATE(start_time) BETWEEN :start_date AND :end_date
+                ORDER BY study_date DESC, start_time ASC;
+            """),
             {
-                "start_date":start_date,
-                "end_date":end_date
+                "user_id": user_id,
+                "start_date": start_date,
+                "end_date": end_date
             }
         )
+
         return result.mappings().all()
 
 # @app.get("/db-test")
