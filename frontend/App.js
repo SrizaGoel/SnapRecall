@@ -6,6 +6,7 @@ import { ResourceScreen } from "./app/screens/ResourceScreen";
 import WelcomeScreen from "./app/screens/WelcomeScreen"
 import LoginScreen from "./app/screens/LoginScreen"
 import SignupScreen from "./app/screens/SignupScreen"
+import { TrackProgressScreen } from "./app/screens/TrackProgressScreen";
 
 const Stack = createNativeStackNavigator();
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="StudyModeScreen" component={StudyModeScreen} />
         <Stack.Screen name="Resources" component={ResourceScreen} />
+        <Stack.Screen name="TrackProgress" component={TrackProgressScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

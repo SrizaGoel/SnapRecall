@@ -274,7 +274,9 @@ export function HomeScreen({ navigation }) {
                         )}
                     </View>
 
-                    <TouchableOpacity style={styles.progressTracker}>
+                    <TouchableOpacity style={styles.progressTracker} onPress={()=>{
+                        navigation.navigate('TrackProgress')
+                    }}>
                         <Text style={styles.progressButton}>
                             Track your progress
                         </Text>
