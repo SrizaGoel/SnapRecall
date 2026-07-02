@@ -90,7 +90,6 @@ def retrieve_similar_screenshots(user_id,query):
                     FROM screenshots s JOIN sessions sess ON s.session_id = sess.session_id
                     WHERE sess.user_id = :user_id AND embedding IS NOT NULL
                 ) AS results
-                WHERE distance < 0.25
                 ORDER BY distance
                 LIMIT 5
             """),
@@ -295,3 +294,17 @@ def get_dashboard_data(user_id:int):
             "study_dates": [d.isoformat() for d in study_dates],
             "current_streak":calculate_current_streak(study_dates)
         }
+    
+@app.delete("/sessions/{session_id}")
+def delete_session(session_id: int):
+    with engine.connect() as conn:
+        conn.execute(
+            text("""
+                DELETE FROM sessions
+                WHERE session_id = :session_id
+            """),
+            {"session_id": session_id}
+        )
+        conn.commit()
+
+    return {"message": "Session discarded"}
