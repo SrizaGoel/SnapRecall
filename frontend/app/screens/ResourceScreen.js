@@ -1,14 +1,20 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, ActivityIndicator, Image, Modal } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
+import api from "../../services/api";
 
 export function ResourceScreen() {
     const [question, setQuestion] = useState("");
     const [loading, setLoading] = useState(false);
     const [sources, setSources] = useState([]);
     const [error, setError] = useState("");
+    const user_id = 1;
+    const [selectedIndex, setSelectedIndex] = useState(null);
 
-    const handleAskAI = () => {
+    const openImage = (index) => {
+        setSelectedIndex(index);
+    };
+    const handleAskAI = async () => {
         if (!question.trim()) {
             setError("Please enter a topic");
             return;
@@ -17,23 +23,35 @@ export function ResourceScreen() {
         setLoading(true);
         setSources([]);
 
-        setTimeout(() => {
-            setLoading(false);
-            setSources([
-                {
-                    id: "1",
-                    title: "React Hooks.png",
-                    date: "30 June 2026",
-                    session: "4:10 PM - 5:25 PM"
-                },
-                {
-                    id: "2",
-                    title: "useEffect Notes.png",
-                    date: "29 June 2026",
-                    session: "9:00 AM - 10:15 AM"
-                }
-            ]);
-        }, 1500);
+        // setTimeout(() => {
+        //     setLoading(false);
+        //     setSources([
+        //         {
+        //             id: "1",
+        //             title: "React Hooks.png",
+        //             date: "30 June 2026",
+        //             session: "4:10 PM - 5:25 PM"
+        //         },
+        //         {
+        //             id: "2",
+        //             title: "useEffect Notes.png",
+        //             date: "29 June 2026",
+        //             session: "9:00 AM - 10:15 AM"
+        //         }
+        //     ]);
+        // }, 1500);
+        const { data } = await api.get("/search", {
+            params: {
+                user_id,
+                query: question
+            }
+        })
+        if (data.message) {
+            setSources([]);
+        } else {
+            setSources(data);
+        }
+        setLoading(false);
     };
 
     return (
@@ -82,30 +100,65 @@ export function ResourceScreen() {
                             </View>
                         </View>
 
-                        <ScrollView
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.sourcesScroll}
+                        <FlatList
+                            data={sources}
+                            numColumns={2}
+                            keyExtractor={(item) => item.screenshot_id.toString()}
+                            contentContainerStyle={{ paddingBottom: 20 }}
+                            columnWrapperStyle={{
+                                justifyContent: "space-between",
+                                marginBottom: 12,
+                            }}
+                            renderItem={({ item, index }) => (
+                                <TouchableOpacity
+                                    activeOpacity={0.9}
+                                    onPress={() => openImage(index)}
+                                >
+                                    <Image
+                                        source={{ uri: item.image_url }}
+                                        style={styles.galleryImage}
+                                    />
+                                </TouchableOpacity>
+                            )}
+                        />
+                        <Modal
+                            visible={selectedIndex !== null}
+                            transparent
+                            animationType="fade"
                         >
-                            {sources.map((source) => (
-                                <View key={source.id} style={styles.sourceCard}>
-                                    <View style={styles.sourceImagePlaceholder}>
-                                        <Text style={styles.sourcePlaceholderText}>IMG</Text>
-                                    </View>
-                                    <View style={styles.sourceInfo}>
-                                        <Text style={styles.sourceTitleText} numberOfLines={1}>
-                                            {source.title}
-                                        </Text>
-                                        <Text style={styles.sourceDateText} numberOfLines={1}>
-                                            {source.date}
-                                        </Text>
-                                        <Text style={styles.sessionText} numberOfLines={1}>
-                                            {source.session}
-                                        </Text>
-                                    </View>
-                                </View>
-                            ))}
-                        </ScrollView>
+                            <View style={styles.modalContainer}>
+
+                                <TouchableOpacity
+                                    style={styles.closeButton}
+                                    onPress={() => setSelectedIndex(null)}
+                                >
+                                    <Text style={styles.closeText}>✕</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={styles.leftButton}
+                                    disabled={selectedIndex === 0}
+                                    onPress={() => setSelectedIndex(selectedIndex - 1)}
+                                >
+                                    <Text style={styles.arrow}>❮</Text>
+                                </TouchableOpacity>
+
+                                <Image
+                                    source={{ uri: sources[selectedIndex]?.image_url }}
+                                    style={styles.fullImage}
+                                    resizeMode="contain"
+                                />
+
+                                <TouchableOpacity
+                                    style={styles.rightButton}
+                                    disabled={selectedIndex === sources.length - 1}
+                                    onPress={() => setSelectedIndex(selectedIndex + 1)}
+                                >
+                                    <Text style={styles.arrow}>❯</Text>
+                                </TouchableOpacity>
+
+                            </View>
+                        </Modal>
 
                         <TouchableOpacity
                             style={styles.clearButton}
@@ -319,5 +372,56 @@ const styles = StyleSheet.create({
         color: "#4682B4",
         fontSize: 12,
         fontWeight: "700",
+    },
+    galleryImage: {
+        width: "48%",
+        aspectRatio: 0.7,
+        borderRadius: 16,
+        backgroundColor: "#EEE",
+    },
+
+    modalContainer: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.95)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+
+    fullImage: {
+        width: "92%",
+        height: "80%",
+    },
+
+    closeButton: {
+        position: "absolute",
+        top: 60,
+        right: 25,
+        zIndex: 100,
+    },
+
+    closeText: {
+        color: "#fff",
+        fontSize: 28,
+        fontWeight: "bold",
+    },
+
+    leftButton: {
+        position: "absolute",
+        left: 15,
+        top: "50%",
+        zIndex: 10,
+    },
+
+    rightButton: {
+        position: "absolute",
+        right: 15,
+        top: "50%",
+        zIndex: 10,
+    },
+
+    arrow: {
+        color: "white",
+        fontSize: 38,
+        fontWeight: "bold",
     },
 });
