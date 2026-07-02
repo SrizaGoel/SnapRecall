@@ -4,10 +4,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import React, { useState, useEffect } from "react";
 
 import SessionUploads from "../components/SessionUploads";
+import api from "../../services/api";
 
 export function StudyModeScreen({ navigation }) {
     const [isSessionActive, setIsSessionActive] = useState(false);
     const [seconds, setSeconds] = useState(0);
+    const [sessionId, setSessionId] = useState(null);
     useEffect(() => {
         let interval = null;
         if (isSessionActive) {
@@ -29,6 +31,27 @@ export function StudyModeScreen({ navigation }) {
         );
     };
     const [showPopup, setShowPopup] = useState(false);
+    const user_id = 1; // dummy for now
+
+const startSession = async () => {
+    try {
+        const { data } = await api.post("/start-session", null, {
+            params: {
+                user_id,
+            },
+        });
+
+        console.log("Session started:", data.session_id);
+
+        setSessionId(data.session_id);
+
+        setSeconds(0);
+        setIsSessionActive(true);
+
+    } catch (err) {
+        console.log(err);
+    }
+};
     return (
 
         <LinearGradient
@@ -61,10 +84,7 @@ export function StudyModeScreen({ navigation }) {
                     </View>
                     <TouchableOpacity style={isSessionActive ? styles.disableContainer : styles.enableContainer}
                         disabled={isSessionActive}
-                        onPress={() => {
-                            setSeconds(0);
-                            setIsSessionActive(true);
-                        }}
+                        onPress={startSession}
                     >
                         <Text style={styles.startButton}>
                             Start Session
@@ -93,6 +113,7 @@ export function StudyModeScreen({ navigation }) {
             <SessionUploads
                 visible={showPopup}
                 onClose={() => setShowPopup(false)}
+                sessionId={sessionId}
             />
 
         </LinearGradient >

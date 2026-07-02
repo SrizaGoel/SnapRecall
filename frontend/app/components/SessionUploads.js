@@ -2,8 +2,9 @@ import { Modal, View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Ale
 import { BlurView } from "expo-blur";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
+import api from "../../services/api";
 
-export default function SessionUploads({ visible, onClose }) {
+export default function SessionUploads({ visible, onClose, sessionId }) {
     const [selectedImages, setSelectedImages] = useState([]);
     const handleSelectImages = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -27,14 +28,60 @@ export default function SessionUploads({ visible, onClose }) {
     const handleRemoveImage = (id) => {
         setSelectedImages((prev) => prev.filter((img) => img.id !== id));
     };
-    const handleUpload = () => {
-        Alert.alert("Uploading", `${selectedImages.length} image(s) will be uploaded.`);
+const handleUpload = async () => {
+    try {
+        if (!sessionId) {
+            Alert.alert("Error", "Session not found.");
+            return;
+        }
+
+        for (const image of selectedImages) {
+            const formData = new FormData();
+
+            formData.append("file", {
+                uri: image.uri,
+                name: "screenshot.jpg",
+                type: "image/jpeg",
+            });
+
+            await api.post(
+                `/upload?session_id=${sessionId}`,
+                formData,
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    },
+                }
+            );
+            console.log("Uploading:", image.uri);
+console.log("Session:", sessionId);
+        }
+
+        await api.post(`/end-session/${sessionId}`);
+
+        Alert.alert("Success", "Study session saved successfully.");
+
         setSelectedImages([]);
         onClose();
-    };
-    const handleCancel = () => {
-        setSelectedImages([]);
-        onClose();
+
+    } catch (err) {
+        console.log(err.response?.data || err.message);
+        Alert.alert("Upload Failed", "Couldn't upload screenshots.");
+    }
+};
+    const handleCancel = async () => {
+        try {
+
+            await api.delete(`/sessions/${sessionId}`);
+
+            setSelectedImages([]);
+
+            onClose();
+
+        } catch (err) {
+            console.log(err);
+            Alert.alert("Error", "Couldn't discard session.");
+        }
     };
 
     const canUpload = selectedImages.length > 0;
@@ -248,10 +295,10 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginBottom: 7
     },
-    cancelButton:{
-        color:"white"
+    cancelButton: {
+        color: "white"
     },
-    uploadButton:{
-        color:"white"
+    uploadButton: {
+        color: "white"
     }
 });
