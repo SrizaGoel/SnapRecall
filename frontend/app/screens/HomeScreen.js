@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, TextInput, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import Markdown from "@ronradtke/react-native-markdown-display";
 import api from "../../services/api";
 
 const monthNames = [
@@ -223,7 +224,9 @@ export function HomeScreen({ navigation }) {
                         {aiResponse && (
                             <View style={styles.responseContainer}>
                                 <Text style={styles.responseTitle}>AI Answer</Text>
-                                <Text style={styles.responseText}>{aiResponse}</Text>
+                                <Markdown style={markdownStyles}>
+                                    {aiResponse}
+                                </Markdown>
 
                                 <View style={styles.sourcesHeader}>
                                     <Text style={styles.sourcesTitle}>Sources Used</Text>
@@ -659,4 +662,47 @@ const styles = StyleSheet.create({
         height: 36,
         borderRadius: 8,
     },
+    
 });
+const markdownStyles = {
+    body: {
+        color: "#2E5B82",
+        fontSize: 14,
+        lineHeight: 24,
+    },
+
+    heading1: {
+        fontSize: 22,
+        fontWeight: "700",
+        color: "#1F3F5B",
+        marginTop: 12,
+        marginBottom: 10,
+    },
+
+    heading2: {
+        fontSize: 18,
+        fontWeight: "700",
+        color: "#2E5B82",
+        marginTop: 10,
+        marginBottom: 8,
+    },
+
+    bullet_list: {
+        marginVertical: 6,
+    },
+
+    list_item: {
+        marginVertical: 4,
+    },
+
+    strong: {
+        fontWeight: "700",
+    },
+
+    code_inline: {
+        backgroundColor: "#EEF5FA",
+        borderRadius: 5,
+        paddingHorizontal: 4,
+        color: "#3A7AA7",
+    },
+};
