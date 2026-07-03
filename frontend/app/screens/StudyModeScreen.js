@@ -5,13 +5,15 @@ import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import SessionUploads from "../components/SessionUploads";
-import api from "../../services/api";
+import api from "../services/api";
 
 export function StudyModeScreen({ route, navigation }) {
     const [isSessionActive, setIsSessionActive] = useState(false);
-    const [seconds, setSeconds] = useState(0);
+    // const [seconds, setSeconds] = useState(0);
     const [sessionId, setSessionId] = useState(null);
     const [userId, setUserId] = useState(null);
+    const [elapsedTime, setElapsedTime] = useState(0);
+    const [sessionStartTime, setSessionStartTime] = useState(null);
 
     useEffect(() => {
         const loadUserId = async () => {
@@ -34,20 +36,32 @@ export function StudyModeScreen({ route, navigation }) {
         loadUserId();
     }, [route?.params]);
 
+    // useEffect(() => {
+    //     let interval = null;
+    //     if (isSessionActive) {
+    //         interval = setInterval(() => {
+    //             setSeconds(prev => prev + 1);
+    //         }, 1000)
+    //     }
+    //     return () => clearInterval(interval);
+    // }, [isSessionActive])
     useEffect(() => {
-        let interval = null;
-        if (isSessionActive) {
-            interval = setInterval(() => {
-                setSeconds(prev => prev + 1);
-            }, 1000)
-        }
-        return () => clearInterval(interval);
-    }, [isSessionActive])
+        let interval;
 
+        if (isSessionActive && sessionStartTime) {
+            interval = setInterval(() => {
+                setElapsedTime(
+                    Math.floor((Date.now() - sessionStartTime) / 1000)
+                );
+            }, 1000);
+        }
+
+        return () => clearInterval(interval);
+    }, [isSessionActive, sessionStartTime]);
     const formatTime = () => {
-        const hrs = Math.floor(seconds / 3600);
-        const mins = Math.floor((seconds % 3600) / 60);
-        const secs = seconds % 60;
+        const hrs = Math.floor(elapsedTime / 3600);
+        const mins = Math.floor((elapsedTime % 3600) / 60);
+        const secs = elapsedTime % 60;
 
         return (
             String(hrs).padStart(2, "0") + ":" +
@@ -55,6 +69,24 @@ export function StudyModeScreen({ route, navigation }) {
             String(secs).padStart(2, "0")
         );
     };
+    useEffect(() => {
+        const restoreSession = async () => {
+            const stored = await AsyncStorage.getItem("activeSession");
+
+            if (!stored) return;
+
+            const session = JSON.parse(stored);
+
+            setSessionId(session.sessionId);
+            setSessionStartTime(session.startTime);
+            setElapsedTime(
+                Math.floor((Date.now() - session.startTime) / 1000)
+            );
+            setIsSessionActive(true);
+        };
+
+        restoreSession();
+    }, []);
     const [showPopup, setShowPopup] = useState(false);
 
     const startSession = async () => {
@@ -70,15 +102,35 @@ export function StudyModeScreen({ route, navigation }) {
             });
 
             console.log("Session started:", data.session_id);
+            const startTime = Date.now();
 
             setSessionId(data.session_id);
-
-            setSeconds(0);
+            setSessionStartTime(startTime);
+            setElapsedTime(
+                Math.floor((Date.now() - startTime) / 1000)
+            );
             setIsSessionActive(true);
+
+            await AsyncStorage.setItem(
+                "activeSession",
+                JSON.stringify({
+                    sessionId: data.session_id,
+                    startTime,
+                })
+            );
 
         } catch (err) {
             console.log(err);
         }
+    };
+    const endSession = async () => {
+        await AsyncStorage.removeItem("activeSession");
+
+        setIsSessionActive(false);
+        setElapsedTime(0);
+        setSessionStartTime(null);
+
+        setShowPopup(true);
     };
     return (
 
@@ -110,23 +162,18 @@ export function StudyModeScreen({ route, navigation }) {
                             {formatTime()}
                         </Text>
                     </View>
-                    <TouchableOpacity style={isSessionActive ? styles.disableContainer : styles.enableContainer}
+                    <TouchableOpacity style={isSessionActive ? styles.disableContainer : styles.enableContainerStart}
                         disabled={isSessionActive}
                         onPress={startSession}
                     >
-                        <Text style={styles.startButton}>
+                        <Text style={isSessionActive?styles.startButtonActive:styles.startButtonInactive}>
                             Start Session
                         </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.endSession, isSessionActive ? styles.enableContainer : styles.disableContainer]}
+                    <TouchableOpacity style={[styles.endSession, isSessionActive ? styles.enableContainerEnd : styles.disableContainer]}
                         disabled={!isSessionActive}
-                        onPress={(
-                            () => {
-                                setIsSessionActive(false);
-                                setShowPopup(true);
-                            }
-                        )}>
-                        <Text style={styles.endButton}>
+                        onPress={ endSession}>
+                        <Text style={isSessionActive?styles.endButtonActive:styles.endButtonInactive}>
                             End Session
                         </Text>
                     </TouchableOpacity>
@@ -178,14 +225,24 @@ const styles = StyleSheet.create({
         fontSize: 17,
         fontWeight: "700",
     },
+    
     inactiveText: {
         color: "#00416A",
         fontSize: 17,
         fontWeight: "600",
     },
-    enableContainer: {
+    enableContainerStart: {
         padding: 10,
-        backgroundColor: "#8DA399",
+        backgroundColor: "#147729d6",
+        borderRadius: 20,
+        height: 80,
+        marginTop: 20,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+        enableContainerEnd: {
+        padding: 10,
+        backgroundColor: "#800020",
         borderRadius: 20,
         height: 80,
         marginTop: 20,
@@ -251,14 +308,25 @@ const styles = StyleSheet.create({
         height: 1.5,
         backgroundColor: "#C5C5C5",
     },
-    startButton: {
+    startButtonActive: {
         fontSize: 20,
         fontWeight: 500,
 
     },
-    endButton: {
+        startButtonInactive: {
         fontSize: 20,
-        fontWeight: "500"
+        fontWeight: 500,
+        color:"white"
+
+    },
+    endButtonActive: {
+        fontSize: 20,
+        fontWeight: "500",
+        color:"white"
+    },
+        endButtonInactive: {
+        fontSize: 20,
+        fontWeight: "500",
     },
     endSession: {
         marginTop: 30

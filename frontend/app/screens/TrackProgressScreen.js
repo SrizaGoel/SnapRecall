@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TextInput, Pressable, Platform, Alert, Text, ScrollView } from 'react-native';
+import { StyleSheet, View, TextInput, Pressable, Platform, Alert, Text, ScrollView, TouchableOpacity } from 'react-native';
 import SelectedDate from '../utils/SelectDate';
 import { LinearGradient } from 'expo-linear-gradient';
-import api from "../../services/api";
+import { BlurView } from "expo-blur";
+import api from "../services/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export function TrackProgressScreen({ route, navigation }) {
@@ -107,6 +108,18 @@ export function TrackProgressScreen({ route, navigation }) {
             end={{ x: 1, y: 1 }}
             style={styles.container}
         >
+            <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+            >
+                <BlurView
+                    intensity={35}
+                    tint="light"
+                    style={styles.backBlur}
+                >
+                    <Text style={styles.backArrow}>‹</Text>
+                </BlurView>
+            </TouchableOpacity>
             <View style={styles.card}>
 
                 <Text style={styles.heading}>
@@ -387,6 +400,35 @@ const styles = StyleSheet.create({
         fontSize: 15,
         lineHeight: 24,
         textAlign: "justify",
+    },
+    backButton: {
+        width: 46,
+        height: 46,
+        borderRadius: 16,
+        overflow: "hidden",
+        elevation: 5,
+        shadowColor: "#00416A",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 8,
+    },
+
+    backBlur: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.45)",
+        backgroundColor: "rgba(255,255,255,0.18)",
+    },
+
+    backArrow: {
+        fontSize: 30,
+        color: "#00416A",
+        fontWeight: "700",
+        lineHeight: 30,
+        marginLeft: -2,
     },
 });
 

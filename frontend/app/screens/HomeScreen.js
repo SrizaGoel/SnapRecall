@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, TextInput,
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import Markdown from "@ronradtke/react-native-markdown-display";
-import api from "../../services/api";
+import api from "../services/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const monthNames = [

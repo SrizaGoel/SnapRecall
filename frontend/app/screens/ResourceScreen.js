@@ -1,8 +1,9 @@
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, ActivityIndicator, Image, Modal, Alert } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "../../services/api";
+import api from "../services/api";
 
 export function ResourceScreen({ route, navigation }) {
     const [question, setQuestion] = useState("");
@@ -71,6 +72,18 @@ export function ResourceScreen({ route, navigation }) {
 
     return (
         <LinearGradient colors={["#F5F8FA", "#ECF2F6", "#E3ECF1"]} style={{ flex: 1 }}>
+            <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+            >
+                <BlurView
+                    intensity={60}
+                    tint="light"
+                    style={styles.backBlur}
+                >
+                    <Text style={styles.backArrow}>‹</Text>
+                </BlurView>
+            </TouchableOpacity>
             <View style={styles.aiContainer}>
                 <View style={styles.aiHeader}>
                     <View style={{ flex: 1 }}>
@@ -438,5 +451,36 @@ const styles = StyleSheet.create({
         color: "white",
         fontSize: 38,
         fontWeight: "bold",
+    },
+    backButton: {
+        width: 46,
+        height: 46,
+        borderRadius: 16,
+        overflow: "hidden",
+        elevation: 5,
+        shadowColor: "#00416A",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 8,
+        marginLeft: 20,
+        marginTop: 10
+    },
+
+    backBlur: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.45)",
+        backgroundColor: "rgba(255,255,255,0.18)",
+    },
+
+    backArrow: {
+        fontSize: 30,
+        color: "#00416A",
+        fontWeight: "700",
+        lineHeight: 30,
+        marginLeft: -2,
     },
 });

@@ -2,7 +2,7 @@ import { Modal, View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Ale
 import { BlurView } from "expo-blur";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
-import api from "../../services/api";
+import api from "../services/api";
 
 export default function SessionUploads({ visible, onClose, sessionId }) {
     const [selectedImages, setSelectedImages] = useState([]);
