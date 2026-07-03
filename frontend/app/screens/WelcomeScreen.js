@@ -1,41 +1,46 @@
 import React, { useEffect } from "react";
 import { View, Text, StyleSheet, Image, ActivityIndicator } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
 export default function WelcomeScreen({ navigation }) {
     useEffect(() => {
         const checkLogin = async () => {
-            await new Promise(resolve => setTimeout(resolve, 5000));
-            const token = await AsyncStorage.getItem("userToken");
-            if (token) {
-                navigation.replace("Home");
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            const userDataString = await AsyncStorage.getItem("userData");
+            if (userDataString) {
+                try {
+                    const userData = JSON.parse(userDataString);
+                    navigation.replace("Home", { user_id: userData.user_id, username: userData.username });
+                } catch (e) {
+                    navigation.replace("Login");
+                }
             } else {
                 navigation.replace("Login");
             }
         };
         checkLogin();
     }, []);
-return (
-    <View style={styles.container}>
-      <Image
-        source={require("../assets/snaprecall-logo.png")} 
-        style={styles.logo}
-        resizeMode="contain"
-      />
 
-      <Text style={styles.title}>SnapRecall</Text>
+    return (
+        <View style={styles.container}>
+            <Image
+                source={require("../assets/snaprecall-logo.png")} 
+                style={styles.logo}
+                resizeMode="contain"
+            />
 
-      <Text style={styles.subtitle}>
-        Learn smarter. Remember longer.
-      </Text>
+            <Text style={styles.title}>SnapRecall</Text>
 
-      <ActivityIndicator
-        size="large"
-        color="#6EC1FF"
-        style={styles.loader}
-      />
-    </View>
-  );
+            <Text style={styles.subtitle}>
+                Learn smarter. Remember longer.
+            </Text>
+
+            <ActivityIndicator
+                size="large"
+                color="#6EC1FF"
+                style={styles.loader}
+            />
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({

@@ -1,27 +1,38 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "snapRecall",
+    "slug": "snaprecall",
+    "owner": "sriza",
+    "scheme": "snaprecall",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "/app/assets/icon",
     "userInterfaceStyle": "light",
     "ios": {
+      "bundleIdentifier": "com.snaprecall.app",
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+        "foregroundImage": "app/assets/android-icon-foreground.png",
+        "backgroundImage": "app/assets/android-icon-background.png",
+        "monochromeImage": "app/assets/android-icon-monochrome.png"
+      },
+      "package": "com.snaprecall.app"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "app/assets/favicon.png"
     },
     "plugins": [
-      "@react-native-community/datetimepicker"
-    ]
+      "@react-native-community/datetimepicker",
+      "expo-web-browser",
+      "@react-native-google-signin/google-signin"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "4abd05f6-de84-45f9-9138-d3aa57cb3d12"
+      }
+    }
   }
 }

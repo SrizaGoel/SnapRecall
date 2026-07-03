@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import Markdown from "@ronradtke/react-native-markdown-display";
 import api from "../../services/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const monthNames = [
     "January", "February", "March", "April", "May", "June",
@@ -41,7 +42,7 @@ const generateCalendarDays = (activeDates) => {
     return days;
 };
 
-export function HomeScreen({ navigation }) {
+export function HomeScreen({ route, navigation }) {
     const today = new Date();
     const currentMonthName = monthNames[today.getMonth()];
     const currentYear = today.getFullYear();
@@ -49,13 +50,45 @@ export function HomeScreen({ navigation }) {
     const [currentStreak, setCurrentStreak] = useState(0);
     const calendarDays = generateCalendarDays(activeDates);
 
+    const [userId, setUserId] = useState(null);
+    const [userName, setUserName] = useState("Sriza");
+
     const [question, setQuestion] = useState("");
     const [loading, setLoading] = useState(false);
     const [aiResponse, setAiResponse] = useState(null);
     const [sources, setSources] = useState([]);
     const [input, setInput] = useState("");
 
+    useEffect(() => {
+        const loadUserData = async () => {
+            let id = route?.params?.user_id;
+            let name = route?.params?.username;
+            
+            if (!id) {
+                const userDataString = await AsyncStorage.getItem("userData");
+                if (userDataString) {
+                    try {
+                        const userData = JSON.parse(userDataString);
+                        id = userData.user_id;
+                        name = userData.username;
+                    } catch (e) {
+                        console.log("Error parsing user data in Home:", e);
+                    }
+                }
+            }
+            
+            if (id) {
+                setUserId(id);
+                if (name) setUserName(name);
+            } else {
+                navigation.replace("Login");
+            }
+        };
+        loadUserData();
+    }, [route?.params]);
+
     const handleAskAI = async () => {
+        if (!userId) return;
         if (!question.trim()) {
             setInput("* Please enter a question ");
             return;
@@ -65,20 +98,10 @@ export function HomeScreen({ navigation }) {
         setAiResponse(null);
         setSources([]);
 
-        // setTimeout(() => {
-        //     setLoading(false);
-        //     setAiResponse(
-        //         "Based on your React Native hooks slides, you should use useEffect when synchronizing with an external system. For performance optimizations, consider using useMemo or useCallback."
-        //     );
-        //     setSources([
-        //         { id: "1", title: "React Hooks Slide.png", date: "June 25" },
-        //         { id: "2", title: "UseEffect Notes.png", date: "June 26" }
-        //     ]);
-        // }, 1500);
         try {
             const { data } = await api.get("/ask", {
                 params: {
-                    user_id,
+                    user_id: userId,
                     question,
                 },
             });
@@ -97,10 +120,11 @@ export function HomeScreen({ navigation }) {
             setLoading(false);
         }
     };
-    const user_id = 1
+
     const fetchActiveDays = async () => {
+        if (!userId) return;
         try {
-            const { data } = await api.get(`/dashboard/${user_id}`);
+            const { data } = await api.get(`/dashboard/${userId}`);
 
             setActiveDates(new Set(data.study_dates));
             setCurrentStreak(data.current_streak);
@@ -111,8 +135,10 @@ export function HomeScreen({ navigation }) {
     };
 
     useEffect(() => {
-        fetchActiveDays();
-    }, []);
+        if (userId) {
+            fetchActiveDays();
+        }
+    }, [userId]);
     return (
         <LinearGradient
             colors={["#F5F8FA", "#ECF2F6", "#E3ECF1"]}
@@ -136,7 +162,7 @@ export function HomeScreen({ navigation }) {
                     </View>
 
                     <View>
-                        <Text style={styles.welcomMessage}>Welcome back, Sriza !</Text>
+                        <Text style={styles.welcomMessage}>Welcome back, {userName} !</Text>
                     </View>
 
                     <View style={styles.streakContainer}>

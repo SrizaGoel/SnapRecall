@@ -1,20 +1,46 @@
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, ActivityIndicator, Image, Modal } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, ActivityIndicator, Image, Modal, Alert } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../../services/api";
 
-export function ResourceScreen() {
+export function ResourceScreen({ route, navigation }) {
     const [question, setQuestion] = useState("");
     const [loading, setLoading] = useState(false);
     const [sources, setSources] = useState([]);
     const [error, setError] = useState("");
-    const user_id = 1;
+    const [userId, setUserId] = useState(null);
+
+    useEffect(() => {
+        const loadUserId = async () => {
+            let id = route?.params?.user_id;
+            if (!id) {
+                const userDataString = await AsyncStorage.getItem("userData");
+                if (userDataString) {
+                    try {
+                        const userData = JSON.parse(userDataString);
+                        id = userData.user_id;
+                    } catch (e) {
+                        console.log("Error parsing user data in ResourceScreen:", e);
+                    }
+                }
+            }
+            if (id) {
+                setUserId(id);
+            }
+        };
+        loadUserId();
+    }, [route?.params]);
     const [selectedIndex, setSelectedIndex] = useState(null);
 
     const openImage = (index) => {
         setSelectedIndex(index);
     };
     const handleAskAI = async () => {
+        if (!userId) {
+            Alert.alert("Authentication Required", "Please log in to search resources.");
+            return;
+        }
         if (!question.trim()) {
             setError("Please enter a topic");
             return;
@@ -23,35 +49,24 @@ export function ResourceScreen() {
         setLoading(true);
         setSources([]);
 
-        // setTimeout(() => {
-        //     setLoading(false);
-        //     setSources([
-        //         {
-        //             id: "1",
-        //             title: "React Hooks.png",
-        //             date: "30 June 2026",
-        //             session: "4:10 PM - 5:25 PM"
-        //         },
-        //         {
-        //             id: "2",
-        //             title: "useEffect Notes.png",
-        //             date: "29 June 2026",
-        //             session: "9:00 AM - 10:15 AM"
-        //         }
-        //     ]);
-        // }, 1500);
-        const { data } = await api.get("/search", {
-            params: {
-                user_id,
-                query: question
+        try {
+            const { data } = await api.get("/search", {
+                params: {
+                    user_id: userId,
+                    query: question
+                }
+            })
+            if (data.message) {
+                setSources([]);
+            } else {
+                setSources(data);
             }
-        })
-        if (data.message) {
-            setSources([]);
-        } else {
-            setSources(data);
+        } catch (err) {
+            console.log(err);
+            setError("Search failed. Please try again.");
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     return (

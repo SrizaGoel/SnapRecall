@@ -1,15 +1,39 @@
-import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, TextInput, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, TextInput, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import SessionUploads from "../components/SessionUploads";
 import api from "../../services/api";
 
-export function StudyModeScreen({ navigation }) {
+export function StudyModeScreen({ route, navigation }) {
     const [isSessionActive, setIsSessionActive] = useState(false);
     const [seconds, setSeconds] = useState(0);
     const [sessionId, setSessionId] = useState(null);
+    const [userId, setUserId] = useState(null);
+
+    useEffect(() => {
+        const loadUserId = async () => {
+            let id = route?.params?.user_id;
+            if (!id) {
+                const userDataString = await AsyncStorage.getItem("userData");
+                if (userDataString) {
+                    try {
+                        const userData = JSON.parse(userDataString);
+                        id = userData.user_id;
+                    } catch (e) {
+                        console.log("Error parsing user data in StudyMode:", e);
+                    }
+                }
+            }
+            if (id) {
+                setUserId(id);
+            }
+        };
+        loadUserId();
+    }, [route?.params]);
+
     useEffect(() => {
         let interval = null;
         if (isSessionActive) {
@@ -19,6 +43,7 @@ export function StudyModeScreen({ navigation }) {
         }
         return () => clearInterval(interval);
     }, [isSessionActive])
+
     const formatTime = () => {
         const hrs = Math.floor(seconds / 3600);
         const mins = Math.floor((seconds % 3600) / 60);
@@ -31,27 +56,30 @@ export function StudyModeScreen({ navigation }) {
         );
     };
     const [showPopup, setShowPopup] = useState(false);
-    const user_id = 1; // dummy for now
 
-const startSession = async () => {
-    try {
-        const { data } = await api.post("/start-session", null, {
-            params: {
-                user_id,
-            },
-        });
+    const startSession = async () => {
+        if (!userId) {
+            Alert.alert("Authentication Required", "Please log in to start a study session.");
+            return;
+        }
+        try {
+            const { data } = await api.post("/start-session", null, {
+                params: {
+                    user_id: userId,
+                },
+            });
 
-        console.log("Session started:", data.session_id);
+            console.log("Session started:", data.session_id);
 
-        setSessionId(data.session_id);
+            setSessionId(data.session_id);
 
-        setSeconds(0);
-        setIsSessionActive(true);
+            setSeconds(0);
+            setIsSessionActive(true);
 
-    } catch (err) {
-        console.log(err);
-    }
-};
+        } catch (err) {
+            console.log(err);
+        }
+    };
     return (
 
         <LinearGradient

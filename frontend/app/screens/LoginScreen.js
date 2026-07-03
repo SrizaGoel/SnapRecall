@@ -7,8 +7,10 @@ import {
   StyleSheet,
   Image,
 } from "react-native";
+import { useGoogleSignIn } from "./GoogleSignIn";
 
 export default function LoginScreen({ navigation }) {
+  const { request, promptAsync } = useGoogleSignIn(navigation);
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -28,9 +30,8 @@ export default function LoginScreen({ navigation }) {
         <TouchableOpacity
           style={styles.googleButton}
           activeOpacity={0.85}
-          onPress={() => {
-            // TODO: Google Sign-In
-          }}
+          disabled={!request}
+          onPress={() => promptAsync()}
         >
           <Text style={styles.googleText}>Continue with Google</Text>
         </TouchableOpacity>

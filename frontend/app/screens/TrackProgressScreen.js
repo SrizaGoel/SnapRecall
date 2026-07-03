@@ -3,22 +3,47 @@ import { StyleSheet, View, TextInput, Pressable, Platform, Alert, Text, ScrollVi
 import SelectedDate from '../utils/SelectDate';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from "../../services/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export function TrackProgressScreen() {
+export function TrackProgressScreen({ route, navigation }) {
     const [fromDate, setFromDate] = useState();
     const [toDate, setToDate] = useState();
     const [sessions, setSessions] = useState([]);
-    const user_id = 1;
+    const [userId, setUserId] = useState(null);
+
     const formatDate = (date) => {
         return date.toISOString().split("T")[0];
     };
+
+    useEffect(() => {
+        const loadUserId = async () => {
+            let id = route?.params?.user_id;
+            if (!id) {
+                const userDataString = await AsyncStorage.getItem("userData");
+                if (userDataString) {
+                    try {
+                        const userData = JSON.parse(userDataString);
+                        id = userData.user_id;
+                    } catch (e) {
+                        console.log("Error parsing user data in TrackProgress:", e);
+                    }
+                }
+            }
+            if (id) {
+                setUserId(id);
+            }
+        };
+        loadUserId();
+    }, [route?.params]);
+
     const fetchTodaysSession = async () => {
+        if (!userId) return;
         const today = formatDate(new Date());
 
         try {
             const { data } = await api.get("/sessions_by_range", {
                 params: {
-                    user_id,
+                    user_id: userId,
                     start_date: today,
                     end_date: today,
                 },
@@ -30,10 +55,17 @@ export function TrackProgressScreen() {
             Alert.alert("Error", "Failed to fetch today's sessions.");
         }
     };
+
     useEffect(() => {
-        fetchTodaysSession();
-    }, []);
+        if (userId) {
+            fetchTodaysSession();
+        }
+    }, [userId]);
     const fetchRangeSessions = async () => {
+        if (!userId) {
+            Alert.alert("Authentication Required", "Please log in to track progress.");
+            return;
+        }
         if (!fromDate || !toDate) {
             Alert.alert(
                 "Missing Dates",
@@ -42,15 +74,20 @@ export function TrackProgressScreen() {
             return;
         }
 
-        const { data } = await api.get("/sessions_by_range", {
-            params: {
-                user_id,
-                start_date: formatDate(fromDate),
-                end_date: formatDate(toDate),
-            },
-        });
+        try {
+            const { data } = await api.get("/sessions_by_range", {
+                params: {
+                    user_id: userId,
+                    start_date: formatDate(fromDate),
+                    end_date: formatDate(toDate),
+                },
+            });
 
-        setSessions(data);
+            setSessions(data);
+        } catch (err) {
+            console.log(err);
+            Alert.alert("Error", "Failed to fetch sessions for the selected range.");
+        }
     };
     const groupedSessions = sessions.reduce((acc, session) => {
         const date = session.study_date;
