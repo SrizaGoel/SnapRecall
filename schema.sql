@@ -39,3 +39,5 @@ CREATE TABLE screenshots(
 
 ALTER TABLE screenshots
 ADD COLUMN cloudinary_public_id TEXT;
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS firebase_uid TEXT UNIQUE;
