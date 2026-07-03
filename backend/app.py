@@ -90,6 +90,7 @@ def retrieve_similar_screenshots(user_id,query):
                     FROM screenshots s JOIN sessions sess ON s.session_id = sess.session_id
                     WHERE sess.user_id = :user_id AND embedding IS NOT NULL
                 ) AS results
+                WHERE distance<0.4
                 ORDER BY distance
                 LIMIT 5
             """),
