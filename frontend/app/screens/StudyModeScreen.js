@@ -14,7 +14,7 @@ export function StudyModeScreen({ route, navigation }) {
     const [userId, setUserId] = useState(null);
     const [elapsedTime, setElapsedTime] = useState(0);
     const [sessionStartTime, setSessionStartTime] = useState(null);
-
+    const [selectedImages, setSelectedImages] = useState([]);
     useEffect(() => {
         const loadUserId = async () => {
             let id = route?.params?.user_id;
@@ -166,14 +166,14 @@ export function StudyModeScreen({ route, navigation }) {
                         disabled={isSessionActive}
                         onPress={startSession}
                     >
-                        <Text style={isSessionActive?styles.startButtonActive:styles.startButtonInactive}>
+                        <Text style={isSessionActive ? styles.startButtonActive : styles.startButtonInactive}>
                             Start Session
                         </Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={[styles.endSession, isSessionActive ? styles.enableContainerEnd : styles.disableContainer]}
                         disabled={!isSessionActive}
-                        onPress={ endSession}>
-                        <Text style={isSessionActive?styles.endButtonActive:styles.endButtonInactive}>
+                        onPress={endSession}>
+                        <Text style={isSessionActive ? styles.endButtonActive : styles.endButtonInactive}>
                             End Session
                         </Text>
                     </TouchableOpacity>
@@ -189,6 +189,8 @@ export function StudyModeScreen({ route, navigation }) {
                 visible={showPopup}
                 onClose={() => setShowPopup(false)}
                 sessionId={sessionId}
+                selectedImages={selectedImages}
+                setSelectedImages={selectedImages}
             />
 
         </LinearGradient >
@@ -225,7 +227,7 @@ const styles = StyleSheet.create({
         fontSize: 17,
         fontWeight: "700",
     },
-    
+
     inactiveText: {
         color: "#00416A",
         fontSize: 17,
@@ -240,7 +242,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-        enableContainerEnd: {
+    enableContainerEnd: {
         padding: 10,
         backgroundColor: "#800020",
         borderRadius: 20,
@@ -313,18 +315,18 @@ const styles = StyleSheet.create({
         fontWeight: 500,
 
     },
-        startButtonInactive: {
+    startButtonInactive: {
         fontSize: 20,
         fontWeight: 500,
-        color:"white"
+        color: "white"
 
     },
     endButtonActive: {
         fontSize: 20,
         fontWeight: "500",
-        color:"white"
+        color: "white"
     },
-        endButtonInactive: {
+    endButtonInactive: {
         fontSize: 20,
         fontWeight: "500",
     },

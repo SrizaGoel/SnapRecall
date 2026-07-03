@@ -4,8 +4,8 @@ import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 import api from "../services/api";
 
-export default function SessionUploads({ visible, onClose, sessionId }) {
-    const [selectedImages, setSelectedImages] = useState([]);
+export default function SessionUploads({ visible, onClose, sessionId,selectedImages,setSelectedImages }) {
+    
     const handleSelectImages = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== "granted") {
