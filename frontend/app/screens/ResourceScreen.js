@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, ActivityIndicator, Image, Modal, Alert } from "react-native";
+﻿import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, ActivityIndicator, Image, Modal, Alert } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import React, { useState, useEffect } from "react";

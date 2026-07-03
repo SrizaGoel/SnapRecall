@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, TextInput, Pressable, Platform, Alert, Text, ScrollView, TouchableOpacity } from 'react-native';
 import SelectedDate from '../utils/SelectDate';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -101,6 +101,23 @@ export function TrackProgressScreen({ route, navigation }) {
 
         return acc;
     }, {});
+    const formatDuration = (seconds) => {
+    const totalSeconds = Math.round(seconds);
+
+    const hrs = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+
+    if (hrs > 0) {
+        return `${hrs}h ${mins}m ${secs}s`;
+    }
+
+    if (mins > 0) {
+        return `${mins}m ${secs}s`;
+    }
+
+    return `${secs}s`;
+};
     return (
         <LinearGradient
             colors={["#4F81BD", "#2E5B82", "#0F2C45"]}
@@ -219,7 +236,7 @@ export function TrackProgressScreen({ route, navigation }) {
                                         </Text>
 
                                         <Text style={styles.sessionDuration}>
-                                            Duration • {session.duration}
+                                            Duration • {formatDuration(session.duration)}
                                         </Text>
 
                                         <View style={styles.divider} />

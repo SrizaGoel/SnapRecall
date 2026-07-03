@@ -1,4 +1,4 @@
-import { Modal, View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Alert } from "react-native";
+﻿import { Modal, View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Alert } from "react-native";
 import { BlurView } from "expo-blur";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
