@@ -324,3 +324,48 @@ def delete_session(session_id: int):
         conn.commit()
 
     return {"message": "Session discarded"}
+
+
+from pydantic import BaseModel
+
+class GoogleAuthRequest(BaseModel):
+    email: str
+    username: str
+    firebase_uid: str  # store for future reference
+
+@app.post("/auth/google")
+def google_auth(data: GoogleAuthRequest):
+    with engine.connect() as conn:
+        # Check if user already exists
+        result = conn.execute(
+            text("SELECT user_id, username FROM users WHERE email_id = :email"),
+            {"email": data.email}
+        )
+        existing_user = result.mappings().first()
+
+        if existing_user:
+            # User already registered — just log them in
+            return {
+                "status": "existing",
+                "user_id": existing_user["user_id"],
+                "username": existing_user["username"],
+                "message": "Welcome back!"
+            }
+        else:
+            # New user — register them
+            insert_result = conn.execute(
+                text("""
+                    INSERT INTO users (username, email_id)
+                    VALUES (:username, :email)
+                    RETURNING user_id
+                """),
+                {"username": data.username, "email": data.email}
+            )
+            new_user_id = insert_result.scalar()
+            conn.commit()
+            return {
+                "status": "new",
+                "user_id": new_user_id,
+                "username": data.username,
+                "message": "Account created successfully!"
+            }
