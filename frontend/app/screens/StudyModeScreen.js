@@ -6,6 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import SessionUploads from "../components/SessionUploads";
 import api from "../services/api";
+import { getDailyQuote } from "../utils/getDailyQuote";
 
 export function StudyModeScreen({ route, navigation }) {
     const [isSessionActive, setIsSessionActive] = useState(false);
@@ -15,6 +16,7 @@ export function StudyModeScreen({ route, navigation }) {
     const [elapsedTime, setElapsedTime] = useState(0);
     const [sessionStartTime, setSessionStartTime] = useState(null);
     const [selectedImages, setSelectedImages] = useState([]);
+    const dailyQuote = getDailyQuote();
     useEffect(() => {
         const loadUserId = async () => {
             let id = route?.params?.user_id;
@@ -180,9 +182,9 @@ export function StudyModeScreen({ route, navigation }) {
                 </View>
                 <View style={styles.quoteContainer}>
                     <Text style={styles.quoteText}>
-                        "The beautiful thing about learning is that nobody can take it away from you."
+                        "{dailyQuote.text}"
                     </Text>
-                    <Text style={styles.quoteAuthor}>- B.B. King</Text>
+                    <Text style={styles.quoteAuthor}>- {dailyQuote.author}</Text>
                 </View>
             </View>
             <SessionUploads
@@ -190,7 +192,7 @@ export function StudyModeScreen({ route, navigation }) {
                 onClose={() => setShowPopup(false)}
                 sessionId={sessionId}
                 selectedImages={selectedImages}
-                setSelectedImages={selectedImages}
+                setSelectedImages={setSelectedImages}
             />
 
         </LinearGradient >
