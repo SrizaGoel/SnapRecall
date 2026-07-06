@@ -26,40 +26,66 @@ def home():
     return {
         "message":"SnapRecall backend running"
     }
-
 @app.post("/upload")
 def upload_image(session_id: int = None, file: UploadFile = File(...)):
-    result = cloudinary.uploader.upload(
-        file.file,
-        folder="snaprecall"
-    )
-    ocr_text=extract_text(result["secure_url"])
+    print("1. Upload endpoint hit")
+
+    print("2. Uploading to Cloudinary...")
+    result = cloudinary.uploader.upload(file.file, folder="snaprecall")
+
+    print("3. Cloudinary upload done")
+
+    print("4. Starting OCR...")
+    ocr_text = extract_text(result["secure_url"])
+
+    print("5. OCR complete")
+
+    print("6. Creating embedding...")
     embedding = generate_embedding(ocr_text)
+
+    print("7. Embedding complete")
+
+    print("8. Saving to database...")
+
     with engine.connect() as conn:
-        db_result=conn.execute(
-            text(
-                """
-                    INSERT INTO SCREENSHOTS(session_id,image_url,cloudinary_public_id,processing_status,ocr_text,embedding) VALUES (:session_id,:image_url,:cloudinary_public_id,'embedded',:ocr_text,:embedding)
-                    RETURNING screenshot_id
-                """
-            ),
-            {
-                "image_url":result["secure_url"],
-                "cloudinary_public_id":result["public_id"],
-                "ocr_text":ocr_text,
-                "embedding":embedding,
-                "session_id":session_id
-            }
-        )
-        screenshot_id = db_result.scalar()
+        ...
         conn.commit()
-    return {
-        "filename": file.filename,
-        "image_url": result["secure_url"],
-        "public_id": result["public_id"],
-        "status":"embedded",
-        "screenshot_id":screenshot_id
-    }
+
+    print("9. Returning response")
+    return ...
+# @app.post("/upload")
+# def upload_image(session_id: int = None, file: UploadFile = File(...)):
+#     result = cloudinary.uploader.upload(
+#         file.file,
+#         folder="snaprecall"
+#     )
+#     ocr_text=extract_text(result["secure_url"])
+#     embedding = generate_embedding(ocr_text)
+#     with engine.connect() as conn:
+#         db_result=conn.execute(
+#             text(
+#                 """
+#                     INSERT INTO SCREENSHOTS(session_id,image_url,cloudinary_public_id,processing_status,ocr_text,embedding) VALUES (:session_id,:image_url,:cloudinary_public_id,'embedded',:ocr_text,:embedding)
+#                     RETURNING screenshot_id
+#                 """
+#             ),
+#             {
+#                 "image_url":result["secure_url"],
+#                 "cloudinary_public_id":result["public_id"],
+#                 "ocr_text":ocr_text,
+#                 "embedding":embedding,
+#                 "session_id":session_id
+#             }
+#         )
+#         screenshot_id = db_result.scalar()
+#         conn.commit()
+#     return {
+#         "filename": file.filename,
+#         "image_url": result["secure_url"],
+#         "public_id": result["public_id"],
+#         "status":"embedded",
+#         "screenshot_id":screenshot_id
+#     }
 
 @app.get("/screenshots")
 async def get_screenshots():
