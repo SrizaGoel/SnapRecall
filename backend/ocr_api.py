@@ -12,15 +12,10 @@ def extract_text(image_url):
         },
         timeout=60,
     )
-
     data = response.json()
-
     if data.get("IsErroredOnProcessing"):
         return ""
-
     parsed = data.get("ParsedResults", [])
-
     if not parsed:
         return ""
-
     return parsed[0].get("ParsedText", "")
