@@ -1,6 +1,7 @@
 import requests
+import os
 
-API_KEY = "K86130492288957"
+API_KEY = os.getenv("OCR_API_KEY")
 
 def extract_text(image_url):
     response = requests.post(
