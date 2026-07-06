@@ -9,7 +9,7 @@ import api from "../services/api"
 WebBrowser.maybeCompleteAuthSession();
 
 // Initialize Supabase Client
-const SUPABASE_URL = "https://vjaxpowrwqzmeduqvkex.supabase.co"; 
+const SUPABASE_URL = "https://vjaxpowrwqzmeduqvkex.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqYXhwb3dyd3F6bWVkdXF2a2V4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwNjI1MDgsImV4cCI6MjA5ODYzODUwOH0.xzv7S57iOZsAshVrvIltz1pL_Akp8Ki4sjacwKpwwnw";
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -29,7 +29,7 @@ function parseQueryParams(url) {
   const anchorIndex = url.indexOf("#");
   const queryIndex = url.indexOf("?");
   const startIndex = anchorIndex !== -1 ? anchorIndex + 1 : (queryIndex !== -1 ? queryIndex + 1 : -1);
-  
+
   if (startIndex !== -1) {
     const queryString = url.substring(startIndex);
     const pairs = queryString.split("&");
@@ -117,10 +117,15 @@ export function useGoogleSignIn(navigation) {
   const promptAsync = async () => {
     try {
       setIsSigningIn(true);
+      // const redirectUrl = AuthSession.makeRedirectUri({
+      //   path: "oauth-callback",
+      // });
       const redirectUrl = AuthSession.makeRedirectUri({
+        scheme: "snaprecall",
         path: "oauth-callback",
       });
 
+      console.log("Redirect URL:", redirectUrl);
       console.log("----------------- DEBUG AUTH -----------------");
       console.log("Generated Redirect URL:", redirectUrl);
 
