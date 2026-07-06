@@ -4,8 +4,9 @@ import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 import api from "../services/api";
 
-export default function SessionUploads({ visible, onClose, sessionId,selectedImages,setSelectedImages }) {
-    
+export default function SessionUploads({ visible, onClose, sessionId, selectedImages, setSelectedImages }) {
+    const [uploadStatus, setUploadStatus] = useState("");
+    const [uploading, setUploading] = useState(false);
     const handleSelectImages = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== "granted") {
@@ -28,47 +29,52 @@ export default function SessionUploads({ visible, onClose, sessionId,selectedIma
     const handleRemoveImage = (id) => {
         setSelectedImages((prev) => prev.filter((img) => img.id !== id));
     };
-const handleUpload = async () => {
-    try {
-        if (!sessionId) {
-            Alert.alert("Error", "Session not found.");
-            return;
+    const handleUpload = async () => {
+        try {
+            if (!sessionId) {
+                Alert.alert("Error", "Session not found.");
+                return;
+            }
+            setUploading(true);
+            setUploadStatus("Processing screenshots...");
+            for (const image of selectedImages) {
+                const formData = new FormData();
+
+                formData.append("file", {
+                    uri: image.uri,
+                    name: "screenshot.jpg",
+                    type: "image/jpeg",
+                });
+
+                await api.post(
+                    `/upload?session_id=${sessionId}`,
+                    formData,
+                    {
+                        headers: {
+                            "Content-Type": "multipart/form-data",
+                        },
+                    }
+                );
+                console.log("Uploading:", image.uri);
+                console.log("Session:", sessionId);
+            }
+
+            await api.post(`/end-session/${sessionId}`);
+            setUploading(false);
+            Alert.alert("Success", "Study session saved successfully.");
+
+            setSelectedImages([]);
+            onClose();
+
+        } catch (err) {
+            console.log(err.response?.data || err.message);
+            setUploading(false);
+            Alert.alert("Upload Failed", "Couldn't upload screenshots.");
         }
-
-        for (const image of selectedImages) {
-            const formData = new FormData();
-
-            formData.append("file", {
-                uri: image.uri,
-                name: "screenshot.jpg",
-                type: "image/jpeg",
-            });
-
-            await api.post(
-                `/upload?session_id=${sessionId}`,
-                formData,
-                {
-                    headers: {
-                        "Content-Type": "multipart/form-data",
-                    },
-                }
-            );
-            console.log("Uploading:", image.uri);
-console.log("Session:", sessionId);
+        finally {
+            setUploading(false);
         }
-
-        await api.post(`/end-session/${sessionId}`);
-
-        Alert.alert("Success", "Study session saved successfully.");
-
-        setSelectedImages([]);
-        onClose();
-
-    } catch (err) {
-        console.log(err.response?.data || err.message);
-        Alert.alert("Upload Failed", "Couldn't upload screenshots.");
-    }
-};
+    };
     const handleCancel = async () => {
         try {
 
@@ -106,7 +112,7 @@ console.log("Session:", sessionId);
                             ? "No images selected"
                             : `${selectedImages.length} image${selectedImages.length > 1 ? "s" : ""} selected`}
                     </Text>
-                    <TouchableOpacity style={styles.selectContainer} onPress={handleSelectImages}>
+                    <TouchableOpacity style={styles.selectContainer} onPress={handleSelectImages} disabled={uploading}>
                         <Text style={styles.selectButton}>
                             +   SELECT   IMAGES
                         </Text>
@@ -138,17 +144,29 @@ console.log("Session:", sessionId);
                         )}
                     </ScrollView>
                     <View style={styles.popupBottomContainer}>
-                        <TouchableOpacity style={styles.cancelContainer} onPress={handleCancel}>
+                        <TouchableOpacity style={styles.cancelContainer} onPress={handleCancel} disabled={uploading}>
                             <Text style={styles.cancelButton}>
                                 Cancel
                             </Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.uploadContainer} onPress={handleUpload} disabled={!canUpload}>
+
+                        <TouchableOpacity style={styles.uploadContainer} onPress={handleUpload} disabled={!canUpload || uploading}>
                             <Text style={styles.uploadButton}>
                                 Upload
                             </Text>
                         </TouchableOpacity>
                     </View>
+                    {uploading && (
+                        <View style={styles.processingOverlay}>
+                            <Text style={styles.processingEmoji}>⏳</Text>
+                            <Text style={styles.processingTitle}>Processing...</Text>
+                            <Text style={styles.processingText}>
+                                Uploading and indexing your screenshots.
+                                {"\n"}
+                                Please don't close the app.
+                            </Text>
+                        </View>
+                    )}
                 </View>
             </View>
         </Modal>
@@ -300,5 +318,36 @@ const styles = StyleSheet.create({
     },
     uploadButton: {
         color: "white"
-    }
+    },
+    processingOverlay: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(255,255,255,0.96)",
+        justifyContent: "center",
+        alignItems: "center",
+        borderRadius: 20,
+        zIndex: 999,
+    },
+
+    processingEmoji: {
+        fontSize: 42,
+        marginBottom: 15,
+    },
+
+    processingTitle: {
+        fontSize: 22,
+        fontWeight: "800",
+        color: "#2E5B82",
+        marginBottom: 10,
+    },
+
+    processingText: {
+        textAlign: "center",
+        color: "#6C8CA7",
+        fontSize: 14,
+        lineHeight: 22,
+    },
 });
