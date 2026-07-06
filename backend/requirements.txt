@@ -1,15 +1,38 @@
+# fastapi
+# uvicorn
+# cloudinary
+# python-dotenv
+# sqlalchemy
+# psycopg2-binary
+# python-multipart
+# requests
+# opencv-python
+# numpy
+# torch
+# torchvision
+# paddlepaddle
+# paddleocr
+# sentence-transformers
+
+
 fastapi
-uvicorn
+uvicorn[standard]
 cloudinary
 python-dotenv
 sqlalchemy
 psycopg2-binary
 python-multipart
 requests
-opencv-python
+
 numpy
+opencv-python-headless
+
 torch
 torchvision
+
 paddlepaddle
 paddleocr
+
 sentence-transformers
+
+groq
