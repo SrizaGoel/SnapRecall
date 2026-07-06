@@ -19,11 +19,7 @@ CREATE TABLE sessions(
     tags VARCHAR(100)
 );
 
-ALTER TABLE sessions
-ADD COLUMN title TEXT;
 
-ALTER TABLE sessions
-ADD COLUMN summary TEXT;
 
 
 CREATE TABLE screenshots(
@@ -37,7 +33,27 @@ CREATE TABLE screenshots(
     processing_status VARCHAR(20) CHECK (processing_status IN ('pending','ocr_done','embedded','failed')) DEFAULT 'pending'
 );
 
+
+ALTER TABLE sessions
+ADD COLUMN IF NOT EXISTS title TEXT;
+
+ALTER TABLE sessions
+ADD COLUMN IF NOT EXISTS summary TEXT;
+
+ALTER TABLE screenshots
+ADD COLUMN IF NOT EXISTS cloudinary_public_id TEXT;
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS firebase_uid TEXT UNIQUE;
+
+
+/*
+ALTER TABLE sessions
+ADD COLUMN title TEXT;
+
+ALTER TABLE sessions
+ADD COLUMN summary TEXT;
+
 ALTER TABLE screenshots
 ADD COLUMN cloudinary_public_id TEXT;
 
-ALTER TABLE users ADD COLUMN IF NOT EXISTS firebase_uid TEXT UNIQUE;
+*/

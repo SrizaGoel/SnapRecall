@@ -3,10 +3,9 @@ import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
 import * as Linking from "expo-linking";
 import { createClient } from "@supabase/supabase-js";
-import axios from "axios";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import api from "../services/api"
 WebBrowser.maybeCompleteAuthSession();
 
 // Initialize Supabase Client
@@ -22,7 +21,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   },
 });
 
-const BACKEND_URL = "http://10.0.2.2:8000"; 
+// const BACKEND_URL = "http://10.0.2.2:8000"; 
 
 // Helper function to parse URL query/hash parameters
 function parseQueryParams(url) {
@@ -71,7 +70,7 @@ export function useGoogleSignIn(navigation) {
 
         console.log("Registering/Logging in on FastAPI backend...");
         // Call FastAPI backend
-        const res = await axios.post(`${BACKEND_URL}/auth/google`, {
+        const res = await api.post(`/auth/google`, {
           email: supabaseUser.email,
           username: supabaseUser.user_metadata?.full_name || supabaseUser.email.split("@")[0],
           firebase_uid: supabaseUser.id, // Supabase UUID
