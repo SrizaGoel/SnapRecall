@@ -158,7 +158,6 @@ export default function SessionUploads({ visible, onClose, sessionId, selectedIm
                     </View>
                     {uploading && (
                         <View style={styles.processingOverlay}>
-                            <Text style={styles.processingEmoji}>⏳</Text>
                             <Text style={styles.processingTitle}>Processing...</Text>
                             <Text style={styles.processingText}>
                                 Uploading and indexing your screenshots.
@@ -330,11 +329,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
         borderRadius: 20,
         zIndex: 999,
-    },
-
-    processingEmoji: {
-        fontSize: 42,
-        marginBottom: 15,
     },
 
     processingTitle: {
